@@ -16,5 +16,7 @@ Should start docker container that runns XAMPP on localhost port
 
 You should see a welcome to XAMPP screen once it is working properly!
 
+Make sure you have the docker program open before trying to run the script. If docker is having issues starting, make sure you have your windows features set up properly. Search for "Turn Windows features on and off" and make sure "Containers" and "Hyber-V" is selected below. You should probably know all the other nuances on hwo to get virtualization to work by now :).
+
 ![alt text](https://github.com/Decimator714/CSCE-310-Final-Project/blob/master/setup_pics/windows_features.png?raw=true)
 
