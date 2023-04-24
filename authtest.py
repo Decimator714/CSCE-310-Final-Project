@@ -1,6 +1,5 @@
 import streamlit as st
 import pymongo
-import profiles
 import hashlib
 import os
 from streamlit.components.v1 import html
