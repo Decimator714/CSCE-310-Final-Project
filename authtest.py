@@ -1,87 +1,85 @@
 import streamlit as st
-import pymongo
+import mysql.connector
 import hashlib
-import os
-from streamlit.components.v1 import html
-import os
 
-# Connect to MongoDB
-client = pymongo.MongoClient("mongodb+srv://richiekumar:Srirama10@csce-310.t0eeunr.mongodb.net/")
-db = client["mydatabase"]
-users = db["users"]
-tutors = db["tutors"]
-students = db["students"]
-admins = db["admins"]
+# Connect to MySQL
+mydb = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  password="",
+  database="csce310"
+)
+
+mycursor = mydb.cursor()
 
 # Define function to create a new user account
 def create_account(user_fname, user_lname, user_email, user_password, user_type, **kwargs):
-    # Get the largest user ID in the database or return 0 if there are no users
-    largest_id = users.find_one(sort=[("user_id", pymongo.DESCENDING)]) or {"user_id": 0}
-    user_id = largest_id.get("user_id", 0) + 1
-
     # Hash the password
     hashed_password = hashlib.sha256(user_password.encode()).hexdigest()
 
-    # Create a new document to insert into the MongoDB collection
-    document = {
-        "user_id": user_id,
-        "user_fname": user_fname.strip(),
-        "user_lname": user_lname.strip(),
-        "user_email": user_email.strip(),
-        "user_password": hashed_password,
-        "user_type": user_type,
-        **kwargs
-    }
-
-    # Insert the document into the appropriate MongoDB collection based on the user type
+    # Insert the document into the appropriate MySQL table based on the user type
     if user_type.lower() == "admin":
-        admins.insert_one(document)
+        sql = """
+            INSERT INTO ADMIN (USER_ID, ADMIN_INFO)
+            VALUES ((SELECT USER_ID FROM USER WHERE USER_EMAIL=%s), %s)
+        """
+        val = (user_email.strip(), kwargs.pop('admin_info', ''))
     elif user_type.lower() == "tutor":
         tutor_avail = kwargs.pop('tutor_avail', {})
-        tutor_subjects = kwargs.pop('tutor_subjects', [])
-        document["tutor_avail"] = tutor_avail
-        document["tutor_subjects"] = tutor_subjects
-        tutors.insert_one(document)
+        tutor_subjects = kwargs.pop('tutor_subjects', '')
+        sql = """
+            INSERT INTO TUTOR (USER_ID, TUTOR_AVAIL, TUTOR_SUBJECTS)
+            VALUES ((SELECT USER_ID FROM USER WHERE USER_EMAIL=%s), %s, %s)
+        """
+        val = (user_email.strip(), str(tutor_avail), tutor_subjects)
     elif user_type.lower() == "student":
         grade = kwargs.pop('student_grade', None)
         major = kwargs.pop('student_major', None)
         gpa = kwargs.pop('student_gpa', None)
-        document["student_grade"] = grade
-        document["student_major"] = major
-        document["student_gpa"] = gpa
-        students.insert_one(document)
+        sql = """
+            INSERT INTO STUDENT (USER_ID, STUDENT_GRADE, STUDENT_MAJOR, STUDENT_GPA)
+            VALUES ((SELECT USER_ID FROM USER WHERE USER_EMAIL=%s), %s, %s, %s)
+        """
+        val = (user_email.strip(), grade, major, gpa)
     else:
         raise ValueError(f"Invalid user type: {user_type}")
 
+    mycursor.execute("""
+        INSERT INTO USER (USER_FNAME, USER_LNAME, USER_EMAIL, USER_PASSWORD, USER_TYPE)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (user_fname.strip(), user_lname.strip(), user_email.strip(), hashed_password, user_type.upper()))
+    mydb.commit()
+
+    mycursor.execute(sql, val)
+    mydb.commit()
+
     st.success(f"Account created for {user_email}!")
 
-
-
-
 def authenticate(username, password):
-    # Check if the user exists in any of the collections
+    # Check if the user exists in any of the tables
     user = None
-    for collection in [users, tutors, students, admins]:
-        user = collection.find_one({"user_email": username})
+    tables = ["USER", "TUTOR", "STUDENT", "ADMIN"]
+    for table in tables:
+        mycursor.execute(f"""
+            SELECT * FROM {table}
+            WHERE USER_EMAIL = %s
+        """, (username,))
+        user = mycursor.fetchone()
         if user:
             break
 
     if user:
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
-        if user["user_password"] == hashed_password:
-            os.environ["USER_EMAIL"] = username
-            return True, user["user_type"]
-
+        if user[4] == hashed_password:
+            user_id = user[0]
+            return True, user[5], user_id
 
     print(f"Invalid email or password: {username} {password}")
-    return False, None
-
-
+    return False, None, None
 def main():
     st.set_page_config(page_title="Aggie Scheduler")
 
     st.title("Aggie Scheduler")
-
     # Create a sidebar with options to login or create a new account
     menu = ["Login", "Create Account"]
     choice = st.sidebar.selectbox("Select an option", menu)
@@ -92,17 +90,22 @@ def main():
         user_email = st.text_input("Email")
         user_password = st.text_input("Password", type="password")
         if st.button("Login"):
-            auth_success, user_type = authenticate(user_email, user_password)
+            # Call the authenticate function and store the returned user_type and user_id
+            auth_success, user_type, user_id = authenticate(user_email, user_password)
             if auth_success:
-                # Set the user_email environment variable
-                
+                # Clear the currentUser table
+                mycursor.execute("DELETE FROM currentUser")
+
+                # Insert the user ID into the currentUser table
+                mycursor.execute("INSERT INTO currentUser (current_id) VALUES (%s)", (user_id,))
+                mydb.commit()
+
                 st.success("Logged in!")
-                os.environ['USER_EMAIL'] = user_email
                 redirect_button = '''
                 <script>
                     window.open("http://localhost:8502/", "_blank");
                 </script>
-            '''
+                '''
                 st.components.v1.html(redirect_button)
             else:
                 st.error("Invalid email or password")
@@ -133,9 +136,9 @@ def main():
             if st.button("Create Account"):
                 create_account(user_fname, user_lname, user_email, user_password, user_type, student_grade=student_grade, student_major=student_major, student_gpa=student_gpa)
         elif user_type == "Admin":
-            admin_info = st.text_input("Admin Information")
+            admin_info = st.selectbox("Select a title", ["Professor", "Counselor"])
             if st.button("Create Account"):
                 create_account(user_fname, user_lname, user_email, user_password, user_type, admin_info=admin_info)
-        
+
 if __name__ == "__main__":
     main()
