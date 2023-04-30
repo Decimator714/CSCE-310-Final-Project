@@ -116,40 +116,41 @@ def main():
             else:
                 st.error("Invalid email or password")
 
-        # Show the create account form if the user selects "Create Account"
-        elif choice == "Create Account":
-            st.subheader("Create a New Account")   # Add a subheader for the account creation form
-            user_fname = st.text_input("First Name")   # Add a text input field for the user's first name
-            user_lname = st.text_input("Last Name")   # Add a text input field for the user's last name
-            user_email = st.text_input("Email")   # Add a text input field for the user's email address
-            user_password = st.text_input("Password", type="password")   # Add a text input field for the user's password, with input masked
-            user_type = st.selectbox("Select a user type", ["Student", "Tutor", "Admin"])   # Add a selectbox for the user to choose their account type
-            if user_type == "Tutor":
-                st.write("Please select the days and hours that you are available below. When you click an hour, you will then be prompted to click another hour. This will allow you to create intervals when you are free to tutor.")
-                # If the user selects "Tutor", display instructions and add a multiselect field for the user to choose their availability
-                tutor_avail = st.multiselect("Availability", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
-                tutor_avail_times = {}
-                for day in tutor_avail:
-                    # For each selected day, add a multiselect field for the user to choose their available times
-                    times = st.multiselect(f"Available times for {day}", ["9:00", "10:00", "11:00", "12:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00"])
-                    tutor_avail_times[day] = times
-                tutor_subjects = st.selectbox("Subjects", ['ECEN', 'CSCE'])   # Add a selectbox for the user to choose their tutoring subjects
-                if st.button("Create Account"):
-                    # If the user clicks the "Create Account" button, call the create_account function with the appropriate parameters
-                    create_account(user_fname, user_lname, user_email, user_password, user_type, tutor_avail=tutor_avail_times, tutor_subjects=tutor_subjects)
+    # Show the create account form if the user selects "Create Account"
+    elif choice == "Create Account":
+        st.subheader("Create a New Account")   # Add a subheader for the account creation form
+        user_fname = st.text_input("First Name")   # Add a text input field for the user's first name
+        user_lname = st.text_input("Last Name")   # Add a text input field for the user's last name
+        user_email = st.text_input("Email")   # Add a text input field for the user's email address
+        user_password = st.text_input("Password", type="password")   # Add a text input field for the user's password, with input masked
+        user_type = st.selectbox("Select a user type", ["Student", "Tutor", "Admin"])   # Add a selectbox for the user to choose their account type
+        if user_type == "Tutor":
+            st.write("Please select the days and hours that you are available below. When you click an hour, you will then be prompted to click another hour. This will allow you to create intervals when you are free to tutor.")
+            # If the user selects "Tutor", display instructions and add a multiselect field for the user to choose their availability
+            tutor_avail = st.multiselect("Availability", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
+            tutor_avail_times = {}
+            for day in tutor_avail:
+                # For each selected day, add a multiselect field for the user to choose their available times
+                times = st.multiselect(f"Available times for {day}", ["9:00", "10:00", "11:00", "12:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00"])
+                tutor_avail_times[day] = times
+            tutor_subjects = st.selectbox("Subjects", ['ECEN', 'CSCE'])   # Add a selectbox for the user to choose their tutoring subjects
+            if st.button("Create Account"):
+                # If the user clicks the "Create Account" button, call the create_account function with the appropriate parameters
+                create_account(user_fname, user_lname, user_email, user_password, user_type, tutor_avail=tutor_avail_times, tutor_subjects=tutor_subjects)
 
-            elif user_type == "Student":
-                student_grade = st.selectbox("Grade", ['9', '10', '11', '12'])   # Add a selectbox for the user to choose their grade level
-                student_major = st.selectbox("Major", ['ECEN', 'CSCE'])   # Add a selectbox for the user to choose their major
-                student_gpa = st.text_input("GPA")   # Add a text input field for the user to enter their GPA
-                if st.button("Create Account"):
-                    # If the user clicks the "Create Account" button, call the create_account function with the appropriate parameters
-                    create_account(user_fname, user_lname, user_email, user_password, user_type, student_grade=student_grade, student_major=student_major, student_gpa=student_gpa)
-            elif user_type == "Admin":
-                admin_info = st.selectbox("Select a title", ["Professor", "Counselor"])   # Add a selectbox for the user to choose their title
-                if st.button("Create Account"):
-                    # If the user clicks the "Create Account" button
-                    create_account(user_fname, user_lname, user_email, user_password, user_type, admin_info=admin_info)
+        elif user_type == "Student":
+            student_grade = st.selectbox("Grade", ['9', '10', '11', '12'])   # Add a selectbox for the user to choose their grade level
+            student_major = st.selectbox("Major", ['ECEN', 'CSCE'])   # Add a selectbox for the user to choose their major
+            student_gpa = st.text_input("GPA")   # Add a text input field for the user to enter their GPA
+            if st.button("Create Account"):
+                # If the user clicks the "Create Account" button, call the create_account function with the appropriate parameters
+                create_account(user_fname, user_lname, user_email, user_password, user_type, student_grade=student_grade, student_major=student_major, student_gpa=student_gpa)
+        elif user_type == "Admin":
+            admin_info = st.selectbox("Select a title", ["Professor", "Counselor"])   # Add a selectbox for the user to choose their title
+            if st.button("Create Account"):
+                # If the user clicks the "Create Account" button
+
+                create_account(user_fname, user_lname, user_email, user_password, user_type, admin_info=admin_info)
 
 if __name__ == "__main__":
     main()
