@@ -1,4 +1,5 @@
-Aggie Scheduler Project Readme
+#Aggie Scheduler Project Readme
+
 Aggie Scheduler is a Streamlit app that connects to a MySQL database and allows users to view and edit their personal information. The app has a navigation sidebar with three pages: "Profile", "Calendar", and "File Storage".
 
 Prerequisites
