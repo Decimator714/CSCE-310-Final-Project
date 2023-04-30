@@ -1,3 +1,8 @@
+# This codebase creates a web application for scheduling tutoring sessions and managing student and tutor accounts.
+# The application uses the Streamlit framework for the frontend and connects to a MySQL database for storing user and scheduling data.
+# The code includes functions for creating new user accounts, authenticating users, and displaying the appropriate interface based on user account type.
+
+# RISHABH KUMAR: 6 - 155
 import streamlit as st
 import mysql.connector
 import hashlib
@@ -10,7 +15,7 @@ mydb = mysql.connector.connect(
   database="csce310"
 )
 
-mycursor = mydb.cursor()
+mycursor = mydb.cursor() # Create a cursor object to execute SQL statements
 
 # Define function to create a new user account
 def create_account(user_fname, user_lname, user_email, user_password, user_type, **kwargs):
@@ -50,10 +55,10 @@ def create_account(user_fname, user_lname, user_email, user_password, user_type,
     """, (user_fname.strip(), user_lname.strip(), user_email.strip(), hashed_password, user_type.upper()))
     mydb.commit()
 
-    mycursor.execute(sql, val)
+    mycursor.execute(sql, val)  # Execute the SQL query to insert the user data into the appropriate table
     mydb.commit()
-
-    st.success(f"Account created for {user_email}!")
+    
+    st.success(f"Account created for {user_email}!") # Display a success message indicating that the account has been created
 
 def authenticate(username, password):
     # Check if the user exists in any of the tables
@@ -67,11 +72,11 @@ def authenticate(username, password):
         user = mycursor.fetchone()
         if user:
             break
-
+    # Encoding password
     if user:
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
-        if user[4] == hashed_password:
-            user_id = user[0]
+        hashed_password = hashlib.sha256(password.encode()).hexdigest() # hash the password
+        if user[4] == hashed_password:  # If the hashed passwords match, return the user type and ID along with a Boolean indicating successful authentication
+            user_id = user[0] 
             return True, user[5], user_id
 
     print(f"Invalid email or password: {username} {password}")
@@ -101,6 +106,7 @@ def main():
                 mydb.commit()
 
                 st.success("Logged in!")
+                # Send user to main page
                 redirect_button = '''
                 <script>
                     window.open("http://localhost:8502/", "_blank");
@@ -110,35 +116,40 @@ def main():
             else:
                 st.error("Invalid email or password")
 
-    # Show the create account form if the user selects "Create Account"
-    elif choice == "Create Account":
-        st.subheader("Create a New Account")
-        user_fname = st.text_input("First Name")
-        user_lname = st.text_input("Last Name")
-        user_email = st.text_input("Email")
-        user_password = st.text_input("Password", type="password")
-        user_type = st.selectbox("Select a user type", ["Student", "Tutor", "Admin"])
-        if user_type == "Tutor":
-            st.write("Please select the days and hours that you are available below. When you click an hour, you will then be prompted to click another hour. This will allow you to create intervals when you are free to tutor.")
-            tutor_avail = st.multiselect("Availability", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
-            tutor_avail_times = {}
-            for day in tutor_avail:
-                times = st.multiselect(f"Available times for {day}", ["9:00", "10:00", "11:00", "12:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00"])
-                tutor_avail_times[day] = times
-            tutor_subjects = st.selectbox("Subjects", ['ECEN', 'CSCE'])
-            if st.button("Create Account"):
-                create_account(user_fname, user_lname, user_email, user_password, user_type, tutor_avail=tutor_avail_times, tutor_subjects=tutor_subjects)
+        # Show the create account form if the user selects "Create Account"
+        elif choice == "Create Account":
+            st.subheader("Create a New Account")   # Add a subheader for the account creation form
+            user_fname = st.text_input("First Name")   # Add a text input field for the user's first name
+            user_lname = st.text_input("Last Name")   # Add a text input field for the user's last name
+            user_email = st.text_input("Email")   # Add a text input field for the user's email address
+            user_password = st.text_input("Password", type="password")   # Add a text input field for the user's password, with input masked
+            user_type = st.selectbox("Select a user type", ["Student", "Tutor", "Admin"])   # Add a selectbox for the user to choose their account type
+            if user_type == "Tutor":
+                st.write("Please select the days and hours that you are available below. When you click an hour, you will then be prompted to click another hour. This will allow you to create intervals when you are free to tutor.")
+                # If the user selects "Tutor", display instructions and add a multiselect field for the user to choose their availability
+                tutor_avail = st.multiselect("Availability", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
+                tutor_avail_times = {}
+                for day in tutor_avail:
+                    # For each selected day, add a multiselect field for the user to choose their available times
+                    times = st.multiselect(f"Available times for {day}", ["9:00", "10:00", "11:00", "12:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00"])
+                    tutor_avail_times[day] = times
+                tutor_subjects = st.selectbox("Subjects", ['ECEN', 'CSCE'])   # Add a selectbox for the user to choose their tutoring subjects
+                if st.button("Create Account"):
+                    # If the user clicks the "Create Account" button, call the create_account function with the appropriate parameters
+                    create_account(user_fname, user_lname, user_email, user_password, user_type, tutor_avail=tutor_avail_times, tutor_subjects=tutor_subjects)
 
-        elif user_type == "Student":
-            student_grade = st.selectbox("Grade", ['9', '10', '11', '12'])
-            student_major = st.selectbox("Major", ['ECEN', 'CSCE'])
-            student_gpa = st.text_input("GPA")
-            if st.button("Create Account"):
-                create_account(user_fname, user_lname, user_email, user_password, user_type, student_grade=student_grade, student_major=student_major, student_gpa=student_gpa)
-        elif user_type == "Admin":
-            admin_info = st.selectbox("Select a title", ["Professor", "Counselor"])
-            if st.button("Create Account"):
-                create_account(user_fname, user_lname, user_email, user_password, user_type, admin_info=admin_info)
+            elif user_type == "Student":
+                student_grade = st.selectbox("Grade", ['9', '10', '11', '12'])   # Add a selectbox for the user to choose their grade level
+                student_major = st.selectbox("Major", ['ECEN', 'CSCE'])   # Add a selectbox for the user to choose their major
+                student_gpa = st.text_input("GPA")   # Add a text input field for the user to enter their GPA
+                if st.button("Create Account"):
+                    # If the user clicks the "Create Account" button, call the create_account function with the appropriate parameters
+                    create_account(user_fname, user_lname, user_email, user_password, user_type, student_grade=student_grade, student_major=student_major, student_gpa=student_gpa)
+            elif user_type == "Admin":
+                admin_info = st.selectbox("Select a title", ["Professor", "Counselor"])   # Add a selectbox for the user to choose their title
+                if st.button("Create Account"):
+                    # If the user clicks the "Create Account" button
+                    create_account(user_fname, user_lname, user_email, user_password, user_type, admin_info=admin_info)
 
 if __name__ == "__main__":
     main()

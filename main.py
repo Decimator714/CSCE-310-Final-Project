@@ -1,24 +1,36 @@
+# This code connects to a MySQL database and defines a main function for a Streamlit app called "Aggie Scheduler". 
+# The app displays a navigation sidebar with three pages: "Profile", "Calendar", and "File Storage". 
+# When the user selects a page, the app calls the appropriate function to display the content. 
+# The "Profile" page allows users to view and edit their personal information, including additional fields based on their user type. 
+# The "Calendar" and "File Storage" pages do not currently have any content.
+
+# RISHABH KUMAR: 10 - 149
+
+# Import necessary libraries
 import os
 import mysql.connector
 import streamlit as st
-#from authtest import my_id
 
-# Connect to MySQL
+# Connect to MySQL database
 cnx = mysql.connector.connect(user='root', password='', host='localhost', database='csce310')
 cursor = cnx.cursor()
 
+# Define main function for the Streamlit app
 def main():
+    # Set the page configuration for the app
     st.set_page_config(page_title="Aggie Scheduler")
+    # Create the navigation sidebar with the available pages
     st.sidebar.title("Navigation")
     pages = ["Profile", "Calendar", "File Storage"]
     selection = st.sidebar.radio("Go to", pages)
-    # Get the current user's ID from the currentUser table
+    # Get the current user's ID from the currentUser table in the database
     cursor.execute("SELECT current_id FROM currentUser")
     result = cursor.fetchone()
     if result:
         user_id = result[0]
     else:
         user_id = None
+    # Based on the selected page, call the appropriate function to display the content
     if selection == "Profile":
         show_profile_page(user_id)
     elif selection == "Calendar":
@@ -26,7 +38,7 @@ def main():
     elif selection == "File Storage":
         show_file_storage_page()
 
-    
+# Displaying profile page information    
 def show_profile_page(user_id):  
     if user_id:
         # Add signout button

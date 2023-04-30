@@ -1,60 +1,25 @@
-MongoDB
-----------------------------------------------------------------------------------------------------------------
-Connection:
-    # Connect to MongoDB
-    client = pymongo.MongoClient("mongodb+srv://richiekumar:Srirama10@csce-310.t0eeunr.mongodb.net/")
-    db = client["mydatabase"]
-    users = db["users"]
-    tutors = db["tutors"]
-    students = db["students"]
-    admins = db["admins"]
-----------------------------------------------------------------------------------------------------------------
+Aggie Scheduler Project Readme
+Aggie Scheduler is a Streamlit app that connects to a MySQL database and allows users to view and edit their personal information. The app has a navigation sidebar with three pages: "Profile", "Calendar", and "File Storage".
 
+Prerequisites
+Before you can run the app, you must have the following:
 
+    - Python 3.6 or later
+    - Pip
+    - MySQL server
 
+Installation
+    1. Clone the repository to your local machine.
 
-Dependencies
-----------------------------------------------------------------------------------------------------------------
-Streamlit: version 0.84.0 or higher
-pymongo: version 3.12.0 or higher
-hashlib: built-in module in Python
-os: built-in module in Python
+    2. Install the required Python packages by running the following command in the terminal:
+        pip install -r requirements.txt
 
-To install these dependencies, you can use pip, the Python package manager:
+Usage
+    1. Open a terminal in the project directory.
 
-    pip install streamlit
+    2. Run the following command to start the app:
+        run.bat
 
-And here's how to install pymongo:
+    3. Wait for the command prompt to display "Aggie Scheduler is running on http://localhost:8502".
 
-    pip install pymongo
-----------------------------------------------------------------------------------------------------------------
-
-
-
-User Schema
-----------------------------------------------------------------------------------------------------------------
-USER
-PK | USER_ID
-    | USER_FNAME
-    | USER_LNAME
-    | USER_EMAIL
-    | USER_PASSWORD
-    | USER_TYPE
-
-TUTOR
-PK | TUTOR_ID
-FK | USER_ID
-    | TUTOR_AVAIL
-    | TUTOR_SUBJECTS
-
-ADMIN
-PK | ADMIN_ID
-FK | USER_ID
-
-STUDENT
-PK | STUDENT_ID
-FK | USER_ID
-    | STUDENT_GRADE
-    | STUDENT_MAJOR
-    | STUDENT_GPA
-----------------------------------------------------------------------------------------------------------------
+    4. Open a web browser and go to http://localhost:8502.
