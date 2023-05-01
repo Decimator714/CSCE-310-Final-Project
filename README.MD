@@ -28,7 +28,7 @@ Before you can run the app, you must have the following:
 
 2. Run the following command to start the app:
 
-        run.bat
+        .\run.bat
 
 3. Wait for the command prompt to display "Aggie Scheduler is running on http://localhost:8502".
 
