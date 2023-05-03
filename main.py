@@ -157,8 +157,10 @@ def show_calendar_page():
 
 def show_file_storage_page(user_id):
     st.title("File Storage Page")
+    # Upload file button to allow user to insert files
     uploaded_file = st.file_uploader("Choose a file")
     
+    # Once a file is uploaded, insert the data into the FILE table
     if uploaded_file is not None:
         file_name = uploaded_file.name
         file_upload_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -169,11 +171,13 @@ def show_file_storage_page(user_id):
         cursor.execute(query, values)
         cnx.commit()
 
+    # Data from FILE table is obtained using current user_id
     query = "SELECT * FROM FILE WHERE USER_ID = %s"
     values = (user_id,)
     cursor.execute(query, values)
     data = cursor.fetchall()
 
+    # If data is in the database display all rows into the table
     if data:
         st.write("Uploaded Files:")
         df = pd.DataFrame(data, columns=["File_ID", "User_ID", "File_Name", "File_Upload_Date", "File_Size", "File_Extension"])
