@@ -10,6 +10,8 @@
 import os
 import mysql.connector
 import streamlit as st
+import pandas as pd
+from datetime import datetime
 
 # Connect to MySQL database
 cnx = mysql.connector.connect(user='root', password='', host='localhost', database='csce310')
@@ -36,7 +38,7 @@ def main():
     elif selection == "Calendar":
         show_calendar_page()
     elif selection == "File Storage":
-        show_file_storage_page()
+        show_file_storage_page(user_id)
 
 # Displaying profile page information    
 def show_profile_page(user_id):  
@@ -153,9 +155,31 @@ def show_calendar_page():
     st.title("Calendar Page")
     # Add your calendar page content here
 
-def show_file_storage_page():
+def show_file_storage_page(user_id):
     st.title("File Storage Page")
-    # Add your file storage page content here
+    uploaded_file = st.file_uploader("Choose a file")
+    
+    if uploaded_file is not None:
+        file_name = uploaded_file.name
+        file_upload_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        file_size = uploaded_file.size
+        file_extension = file_name.split('.')[-1]
+        query = "INSERT INTO FILE (USER_ID, FILE_NAME, FILE_UPLOAD_DATE, FILE_SIZE, FILE_EXTENSION) VALUES (%s, %s, %s, %s, %s)"
+        values = (user_id, file_name, file_upload_date, file_size, file_extension)
+        cursor.execute(query, values)
+        cnx.commit()
+
+    query = "SELECT * FROM FILE WHERE USER_ID = %s"
+    values = (user_id,)
+    cursor.execute(query, values)
+    data = cursor.fetchall()
+
+    if data:
+        st.write("Uploaded Files:")
+        df = pd.DataFrame(data, columns=["File_ID", "User_ID", "File_Name", "File_Upload_Date", "File_Size", "File_Extension"])
+        st.table(df)
+    else:
+        st.write("No files uploaded.")
 
 if __name__ == "__main__":
     main()
