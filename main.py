@@ -157,6 +157,7 @@ def show_calendar_page():
 
 def show_file_storage_page(user_id):
     st.title("File Storage Page")
+
     # Upload file button to allow user to insert files
     uploaded_file = st.file_uploader("Choose a file")
     
@@ -181,7 +182,13 @@ def show_file_storage_page(user_id):
     if data:
         st.write("Uploaded Files:")
         df = pd.DataFrame(data, columns=["File_ID", "User_ID", "File_Name", "File_Upload_Date", "File_Size", "File_Extension"])
-        st.table(df)
+        
+        # Add a new column for the "Delete" button to the DataFrame
+        delete_button_col = ['<button name="delete_button" value="{}">Delete</button>'.format(row['File_ID']) for index, row in df.iterrows()]
+        df.insert(6, 'Delete', delete_button_col)
+        
+        # Set up a custom table display with the "Delete" button as a column
+        st.write(df.to_html(escape=False), unsafe_allow_html=True)
     else:
         st.write("No files uploaded.")
 
