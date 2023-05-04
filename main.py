@@ -160,6 +160,9 @@ def show_file_storage_page(user_id):
 
     # Upload file button to allow user to insert files
     uploaded_file = st.file_uploader("Choose a file")
+
+    # Text input for deleting files
+    file_id_input = st.text_input("Enter File ID for :red[deletion]")
     
     # Once a file is uploaded, insert the data into the FILE table
     if uploaded_file is not None:
@@ -172,6 +175,14 @@ def show_file_storage_page(user_id):
         cursor.execute(query, values)
         cnx.commit()
 
+    if file_id_input:
+        file_id = int(file_id_input)
+        query = "DELETE FROM FILE WHERE FILE_ID = %s"
+        values = (file_id,)
+        cursor.execute(query, values)
+        cnx.commit()
+        st.write(file_id_input, "has been delete from the database")
+
     # Data from FILE table is obtained using current user_id
     query = "SELECT * FROM FILE WHERE USER_ID = %s"
     values = (user_id,)
@@ -182,15 +193,11 @@ def show_file_storage_page(user_id):
     if data:
         st.write("Uploaded Files:")
         df = pd.DataFrame(data, columns=["File_ID", "User_ID", "File_Name", "File_Upload_Date", "File_Size", "File_Extension"])
-        
-        # Add a new column for the "Delete" button to the DataFrame
-        delete_button_col = ['<button name="delete_button" value="{}">Delete</button>'.format(row['File_ID']) for index, row in df.iterrows()]
-        df.insert(6, 'Delete', delete_button_col)
-        
         # Set up a custom table display with the "Delete" button as a column
-        st.write(df.to_html(escape=False), unsafe_allow_html=True)
+        st.write(df)
     else:
         st.write("No files uploaded.")
+
 
 if __name__ == "__main__":
     main()
