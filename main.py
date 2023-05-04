@@ -159,10 +159,20 @@ def show_file_storage_page(user_id):
     st.title("File Storage Page")
 
     # Upload file button to allow user to insert files
-    uploaded_file = st.file_uploader("Choose a file")
+    uploaded_file = st.file_uploader("Choose a file to upload to the database")
 
     # Text input for deleting files
-    file_id_input = st.text_input("Enter File ID for :red[deletion]")
+    file_id_delete = st.text_input("Enter File ID for :red[deletion]")
+
+    # Columns to organize the update inputs
+    col1, col2 = st.columns(2)
+
+    with col1:
+        # Text input for updating files
+        file_id_update = st.text_input("Enter File ID to :green[update]")
+    
+    with col2:
+        file_name = st.text_input("Enter new file name to :green[update]")
     
     # Once a file is uploaded, insert the data into the FILE table
     if uploaded_file is not None:
@@ -175,13 +185,22 @@ def show_file_storage_page(user_id):
         cursor.execute(query, values)
         cnx.commit()
 
-    if file_id_input:
-        file_id = int(file_id_input)
+    # Once file id inputted in text box for deletion, execute delete query
+    if file_id_delete:
+        file_id = int(file_id_delete)
         query = "DELETE FROM FILE WHERE FILE_ID = %s"
         values = (file_id,)
         cursor.execute(query, values)
         cnx.commit()
-        st.write(file_id_input, "has been delete from the database")
+        st.write("File ID", file_id_delete, "has been deleted from the database")
+
+    if file_id_update and file_name:
+        file_id = int(file_id_update)
+        query = "UPDATE FILE SET FILE_NAME = %s WHERE FILE_ID = %s"
+        values = (file_name, file_id)
+        cursor.execute(query, values)
+        cnx.commit()
+        st.write("File ID", file_id_update, "has been updated")
 
     # Data from FILE table is obtained using current user_id
     query = "SELECT * FROM FILE WHERE USER_ID = %s"
