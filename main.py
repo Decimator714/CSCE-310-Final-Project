@@ -362,13 +362,19 @@ def display_chat(is_file, user_id, appt_id):
             print(comment)
             st.session_state.messages.append({"Sender": "You", "Message": comment[4]})
         for message in st.session_state.messages:
-            my_word += f"**{message['Sender']}:** {message['Message']}  \n"
+            my_word += f"<p class='fontsize'><b>{message['Sender']}:</b> {message['Message']}</p> \n\n"
 
     print(my_word)
     
-    chat_history.write(my_word)
+    chat_history.markdown(my_word, unsafe_allow_html=True)
+    
     input_box = st.text_input("Type your message here and press Send", key=f"input{appt_id}")
-
+    
+    if st.button(f"Delete Comments", key=f"messagesdel{appt_id}"):
+        
+        chat_history = st.empty()
+        cursor.execute(f'DELETE FROM appointment_comment WHERE APPT_ID={appt_id}')
+        cnx.commit()
     
     if st.button("Send", key=f"button{appt_id}") :
             
