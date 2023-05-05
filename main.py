@@ -8,6 +8,7 @@
 
 # Import necessary libraries
 import os
+import datetime
 import mysql.connector
 import streamlit as st
 
@@ -34,7 +35,7 @@ def main():
     if selection == "Profile":
         show_profile_page(user_id)
     elif selection == "Calendar":
-        show_calendar_page()
+        show_calendar_page(user_id)
     elif selection == "File Storage":
         show_file_storage_page()
 
@@ -149,8 +150,111 @@ def show_profile_page(user_id):
         st.write("User id not found in environment variable")
 
 
-def show_calendar_page():
-    st.title("Calendar Page")
+def show_calendar_page(user_id):
+    st.title('Your Appointments')
+    # Check for null user_id
+    if not user_id:
+        st.write("User id not found in environment variable")
+        return
+
+    cursor.execute("SELECT * FROM user WHERE USER_ID=%s", (user_id,))
+    user = cursor.fetchone()
+
+    if not user:
+        st.write(f'User with id {user_id} not found.')
+        return
+
+    user_type = user[5]
+
+    col1, col2 = st.columns([1, 1])
+    
+    # Upcoming Events in left column 
+    # Has SELECT, DELETE, and UPDATE queries
+    with col1: 
+        st.subheader("Upcoming")
+
+        cursor.execute("SELECT * FROM attendee INNER JOIN appointment ON attendee.APPT_ID=appointment.APPT_ID WHERE USER_ID=%s", (user_id,))
+        data = cursor.fetchall()
+        if data:
+            for appt in data:
+                st.markdown("""---""")
+                with st.container():
+                    st.subheader(f'{appt[2]}')
+                    st.write(f'On {appt[5].date()}')
+                    st.write(f'Goes from {appt[5].time()} - {appt[6].time()}')
+                    st.write(f'At {appt[7]}')
+                    if st.button("Edit"):
+                        pass
+                    if user_type == 'TUTOR' or user_type == 'ADMIN':
+                        if st.button("Delete"):
+                            cursor.execute(f'DELETE FROM attendee WHERE APPT_ID={appt[0]}')
+                            cursor.execute(f'DELETE FROM appointment WHERE APPT_ID={appt[0]}')
+                            cnx.commit()
+
+                    if st.button("Show Comments"):
+                        pass
+                        # Load Comments and display somehow. Maybe similar to the for loop with st.container above
+                        # APPT_ID is appt[0] at this scope
+                        # If you find a different way of doing it for the comments, feel free to change it, I will be using this structure though
+
+            st.markdown("""---""")
+
+
+
+    # Form to make new event in right column
+    # Has INSERT queries
+    if user_type == 'TUTOR' or user_type == 'ADMIN':
+        with col2:
+            user_ids_attending = [user_id]
+            with st.form("add_student"):
+                st.subheader("Step 1: Add Student")
+                student_fname = st.text_input("Student First Name")
+                student_lname = st.text_input("Student Last Name")
+                if st.form_submit_button("Search"):
+                    cursor.execute("SELECT * FROM user WHERE USER_FNAME=%s AND USER_LNAME=%s", (student_fname, student_lname,))
+                    student = cursor.fetchone()
+                    if not student:
+                        st.write(f'Could not find student by the name of {student_fname} {student_lname}')
+                    elif student[0] == user_id:
+                        st.write(f'Unable to add yourself to an appointment')
+                    else:
+                        user_ids_attending.append(student[0])
+                        st.write(f'{student_fname} {student_lname} Added to Appointment!')
+                    
+            with st.form("event_information"):
+                st.subheader("Step 2: Create Event")
+                appt_name = st.text_input("Appointment Name")
+                date = st.date_input("Date of Event", 
+                    value=(datetime.datetime.now() + datetime.timedelta(days=1)).date(),
+                    min_value=datetime.datetime.now().date(),
+                    max_value=(datetime.datetime.now() + datetime.timedelta(days=30)) 
+                )
+                start_time = st.time_input("Start Time" , value=(datetime.datetime.now() + datetime.timedelta(days=1)).time())
+                end_time = st.time_input("End Time", value=(datetime.datetime.now() + datetime.timedelta(days=1, hours=1)).time())
+                location = st.text_input("Street Address or Zoom Link")
+                if st.form_submit_button("Create Appointment"):
+                    start_datetime = datetime.datetime.combine(date=date, time=start_time)
+                    end_datetime = datetime.datetime.combine(date=date, time=end_time)
+                    
+                    # Add appointment
+                    appt_sql = "INSERT INTO appointment (START_TIME, END_TIME, LOCATION) VALUES(%s, %s, %s)"
+                    appt_val = (start_datetime, end_datetime, location)
+                    
+                    cursor.execute(appt_sql, appt_val)
+                    cnx.commit()
+
+                    # Get auto generated appt_id to use for attendee inserts
+                    appt_id = cursor.lastrowid
+
+                    # Add attendee(s)
+                    sql = ("INSERT INTO attendee (APPT_ID, USER_ID, APPT_NAME, IS_ORGANIZER) VALUES (%s, %s, %s, %s)")
+                    for uid in user_ids_attending:
+                        is_organizer = True if uid == user_id else False 
+                        val = (appt_id, uid, appt_name, is_organizer)
+                        cursor.execute(sql, val)
+                        cnx.commit()
+    
+
     # Add your calendar page content here
 
 def show_file_storage_page():
