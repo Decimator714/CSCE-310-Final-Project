@@ -194,6 +194,7 @@ def show_file_storage_page(user_id):
         cnx.commit()
         st.write("File ID", file_id_delete, "has been deleted from the database")
 
+    # If there is an input in the update file id and file name text box, execute update query
     if file_id_update and file_name:
         file_id = int(file_id_update)
         query = "UPDATE FILE SET FILE_NAME = %s WHERE FILE_ID = %s"
@@ -208,7 +209,7 @@ def show_file_storage_page(user_id):
     cursor.execute(query, values)
     data = cursor.fetchall()
 
-    # If data is in the database display all rows into the table
+    # If data is in the database display all rows into the table 
     if data:
         st.write("Uploaded Files:")
         df = pd.DataFrame(data, columns=["File_ID", "User_ID", "File_Name", "File_Upload_Date", "File_Size", "File_Extension"])
