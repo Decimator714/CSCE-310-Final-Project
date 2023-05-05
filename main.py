@@ -8,11 +8,10 @@
 
 # Import necessary libraries
 import os
-import datetime
 import mysql.connector
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+import datetime
 
 # Connect to MySQL database
 cnx = mysql.connector.connect(user='root', password='', host='localhost', database='csce310')
