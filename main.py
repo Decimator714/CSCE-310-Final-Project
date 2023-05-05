@@ -180,28 +180,29 @@ def show_calendar_page(user_id):
         data = cursor.fetchall()
         if data:
             for appt in data:
+
                 st.markdown("""---""")
                 with st.container():
                     st.subheader(f'{appt[2]}')
                     st.write(f'On {appt[5].date()}')
                     st.write(f'Goes from {appt[5].time()} - {appt[6].time()}')
                     st.write(f'At {appt[7]}')
-                    if st.button("Edit"):
+                    if st.button("Edit", key=f"edit{appt[0]}"):
                         pass
                     if user_type == 'TUTOR' or user_type == 'ADMIN':
-                        if st.button("Delete"):
+                        if st.button("Delete", key=f"delete{appt[0]}"):
                             cursor.execute(f'DELETE FROM attendee WHERE APPT_ID={appt[0]}')
                             cursor.execute(f'DELETE FROM appointment WHERE APPT_ID={appt[0]}')
                             cnx.commit()
 
-                    if st.button("Show Comments"):
+                    if st.button("Show Comments", key=f"comment{appt[0]}"):
                         if not st.session_state.showComments:
                             st.session_state.showComments = True
                         else:
                             st.session_state.showComments = False
 
                     if st.session_state.showComments:
-                        display_chat()
+                        display_chat(False, user_id, appt[0])
 
 
                     
@@ -332,29 +333,68 @@ def show_file_storage_page(user_id):
     else:
         st.write("No files uploaded.")
 
-def display_chat():
+def display_chat(is_file, user_id, appt_id):
+    #NEED A SELECT, INSERT, AND DELETE
     
     st.subheader("Comments")
-
-    chat_history = st.empty()
-    input_box = st.text_input("Type your message here and press Send")
-
     if 'messages' not in st.session_state:
-        st.session_state.messages = []
-    if st.button("Send") :
+        st.session_state.messages = [] 
+    #get chat history
+    chat_history = st.empty()
+    if(is_file):
+        file_comment = ""
+    else:
+        appt_comment = f"SELECT * FROM appointment_comment INNER JOIN comment ON appointment_comment.COMMENT_ID=comment.COMMENT_ID WHERE APPT_ID={appt_id}"
+        cursor.execute(appt_comment)
+        comments = cursor.fetchall()
+        st.session_state.messages = [] 
+        my_word = ""
+        chat_history.write(my_word)
+        for comment in comments:
+            print(comment)
+            st.session_state.messages.append({"Sender": "You", "Message": comment[4]})
+        for message in st.session_state.messages:
+            my_word += f"**{message['Sender']}:** {message['Message']}  \n"
+
+    print(my_word)
+    
+    chat_history.write(my_word)
+    input_box = st.text_input("Type your message here and press Send", key=f"input{appt_id}")
+
+    
+    if st.button("Send", key=f"button{appt_id}") :
             
+        #add comment
+        if(is_file):
+            file_comment = ""
+        else: #is_appointment
+            appt_comment = "INSERT INTO comment (USER_ID, TEXT, COLOR, FONT, SIZE, TIME_STAMP, COMMENT_TYPE) VALUES \
+                (%s, %s, %s, %s, %s, %s, 'APPOINTMENT_COMMENT')"
+            
+            values = (user_id, input_box, 'black', 'comic sans', 12, datetime.datetime.now())
+
+            cursor.execute(appt_comment, values)
+            cnx.commit()
+
+            newId = "SELECT LAST_INSERT_ID()"
+            cursor.execute(newId)
+            newId = cursor.fetchone()
+
+            print(newId[0])
+
+            appt_comment = "INSERT INTO appointment_comment (COMMENT_ID, APPT_ID) VALUES (%s, %s)"
+            values = (newId[0], appt_id)
+
+            cursor.execute(appt_comment, values)
+            cnx.commit()
 
         st.session_state.messages.append({"Sender": "You", "Message": input_box})
        # chat_history.markdown("#### Chat History:")
         
-        my_word = ""
-        for message in st.session_state.messages:
-            my_word += f"**{message['Sender']}:** {message['Message']}  \n"
+        
+        message = st.session_state.messages[len(st.session_state.messages) - 1]
             
-        chat_history.write(my_word)
-        chat_history.write(my_word)
-        chat_history.write(my_word)
-        chat_history.write(my_word)
+        chat_history.write(my_word + f"**{message['Sender']}:** {message['Message']}  \n")
         
 
 
