@@ -173,30 +173,37 @@ def show_calendar_page(user_id):
     # Has SELECT, DELETE, and UPDATE queries
     with col1: 
         st.subheader("Upcoming")
-
         cursor.execute("SELECT * FROM attendee INNER JOIN appointment ON attendee.APPT_ID=appointment.APPT_ID WHERE USER_ID=%s", (user_id,))
         data = cursor.fetchall()
         if data:
-            for appt in data:
+            for index, appt in enumerate(data):
                 st.markdown("""---""")
-                with st.container():
-                    st.subheader(f'{appt[2]}')
+                edit_key = f'appt-{index}'
+                name_key = f'appt-{index}-name'
+                st.session_state[name_key] = appt[2]
+                st.session_state[edit_key] = False
+                with st.form(f'edit-form-{index}'):
+                    appt_name = st.text_input("Appointment Name", value=appt[2])
                     st.write(f'On {appt[5].date()}')
                     st.write(f'Goes from {appt[5].time()} - {appt[6].time()}')
                     st.write(f'At {appt[7]}')
-                    if st.button("Edit"):
-                        pass
-                    if user_type == 'TUTOR' or user_type == 'ADMIN':
-                        if st.button("Delete"):
-                            cursor.execute(f'DELETE FROM attendee WHERE APPT_ID={appt[0]}')
-                            cursor.execute(f'DELETE FROM appointment WHERE APPT_ID={appt[0]}')
-                            cnx.commit()
 
-                    if st.button("Show Comments"):
-                        pass
-                        # Load Comments and display somehow. Maybe similar to the for loop with st.container above
-                        # APPT_ID is appt[0] at this scope
-                        # If you find a different way of doing it for the comments, feel free to change it, I will be using this structure though
+                    if st.form_submit_button("Save Changes"):
+                        cursor.execute("UPDATE attendee SET APPT_NAME=%s WHERE APPT_ID=%s AND USER_ID=%s", (appt_name, appt[0], user_id))
+                        cnx.commit()
+
+                if user_type == 'TUTOR' or user_type == 'ADMIN':
+                    if st.button("Delete Appointment"):
+                        cursor.execute(f'DELETE FROM attendee WHERE APPT_ID={appt[0]}')
+                        cursor.execute(f'DELETE FROM appointment WHERE APPT_ID={appt[0]}')
+                        cnx.commit()                               
+
+
+                if st.button("Show Comments"):
+                    pass
+                    # Load Comments and display somehow. Maybe similar to the for loop with st.container above
+                    # APPT_ID is appt[0] at this scope
+                    # If you find a different way of doing it for the comments, feel free to change it, I will be using this structure though
 
             st.markdown("""---""")
 
