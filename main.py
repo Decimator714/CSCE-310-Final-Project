@@ -169,10 +169,13 @@ def show_calendar_page(user_id):
 
     col1, col2 = st.columns([1, 1])
     
+    
     # Upcoming Events in left column 
     # Has SELECT, DELETE, and UPDATE queries
     with col1: 
         st.subheader("Upcoming")
+        if 'showComments' not in st.session_state:
+            st.session_state.showComments = False
         cursor.execute("SELECT * FROM attendee INNER JOIN appointment ON attendee.APPT_ID=appointment.APPT_ID WHERE USER_ID=%s", (user_id,))
         data = cursor.fetchall()
         if data:
@@ -200,10 +203,13 @@ def show_calendar_page(user_id):
 
 
                 if st.button("Show Comments"):
-                    pass
-                    # Load Comments and display somehow. Maybe similar to the for loop with st.container above
-                    # APPT_ID is appt[0] at this scope
-                    # If you find a different way of doing it for the comments, feel free to change it, I will be using this structure though
+                    if not st.session_state.showComments:
+                        st.session_state.showComments = True
+                    else:
+                        st.session_state.showComments = False
+
+                if st.session_state.showComments:
+                    display_chat()
 
             st.markdown("""---""")
 
@@ -287,7 +293,7 @@ def show_file_storage_page(user_id):
     # Once a file is uploaded, insert the data into the FILE table
     if uploaded_file is not None:
         file_name = uploaded_file.name
-        file_upload_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        file_upload_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         file_size = uploaded_file.size
         file_extension = file_name.split('.')[-1]
         query = "INSERT INTO FILE (USER_ID, FILE_NAME, FILE_UPLOAD_DATE, FILE_SIZE, FILE_EXTENSION) VALUES (%s, %s, %s, %s, %s)"
@@ -328,6 +334,32 @@ def show_file_storage_page(user_id):
     else:
         st.write("No files uploaded.")
 
+def display_chat():
+    
+    st.subheader("Comments")
+
+    chat_history = st.empty()
+    input_box = st.text_input("Type your message here and press Send")
+
+    if 'messages' not in st.session_state:
+        st.session_state.messages = []
+    if st.button("Send") :
+            
+
+        st.session_state.messages.append({"Sender": "You", "Message": input_box})
+       # chat_history.markdown("#### Chat History:")
+        
+        my_word = ""
+        for message in st.session_state.messages:
+            my_word += f"**{message['Sender']}:** {message['Message']}  \n"
+            
+        chat_history.write(my_word)
+        chat_history.write(my_word)
+        chat_history.write(my_word)
+        chat_history.write(my_word)
+        
+
 
 if __name__ == "__main__":
+
     main()
