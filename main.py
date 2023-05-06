@@ -150,7 +150,7 @@ def show_profile_page(user_id):
     else:
         st.write("User id not found in environment variable")
 
-
+# CODED BY: DANIEL LINK (Functionality Set 2)
 def show_calendar_page(user_id):
     st.title('Your Appointments')
     # Check for null user_id
@@ -278,6 +278,7 @@ def show_calendar_page(user_id):
 
     # Add your calendar page content here
 
+# CODED BY: BRANDON MOON (Functionality Set 3)
 def show_file_storage_page(user_id):
     st.title("File Storage Page")
 
@@ -341,6 +342,7 @@ def show_file_storage_page(user_id):
     else:
         st.write("No files uploaded.")
 
+# CODED BY: LUCIAN PERNICIARO (Functionality Set 4)
 def display_chat(is_file, user_id, appt_id):
     #NEED A SELECT, INSERT, AND DELETE
     
